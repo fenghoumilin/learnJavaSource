@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="509c7dbb-0333-4c42-ad7e-6830675d9848" name="Default Changelist" comment="" />
+    <list default="true" id="509c7dbb-0333-4c42-ad7e-6830675d9848" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/java/util/HashMap.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/util/HashMap.java" afterDir="false" />
+    </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -19,22 +21,22 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="java" value="1" />
+          <entry key="java" value="5" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="JAVA" value="1" />
+          <entry key="JAVA" value="5" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="java" value="3" />
+          <entry key="java" value="431" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="JAVA" value="3" />
+          <entry key="JAVA" value="431" />
         </counts>
       </usages-collector>
     </session>
@@ -44,10 +46,23 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/java/util/HashMap.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="453">
-              <caret line="686" column="55" selection-start-line="686" selection-start-column="55" selection-end-line="686" selection-end-column="55" />
+            <state relative-caret-position="264">
+              <caret line="1938" column="39" lean-forward="true" selection-start-line="1938" selection-start-column="39" selection-end-line="1938" selection-end-column="39" />
               <folding>
                 <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/src.zip!/java/util/LinkedHashMap.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="257">
+              <caret line="191" column="17" selection-start-line="191" selection-start-column="17" selection-end-line="191" selection-end-column="17" />
+              <folding>
+                <element signature="e#8806#8807#0" expanded="true" />
+                <element signature="e#8859#8860#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -59,7 +74,11 @@
     <findStrings>
       <find>threshold</find>
       <find>put</find>
+      <find>treeify</find>
     </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -74,12 +93,13 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="24" />
-    <option name="y" value="36" />
+  <component name="ProjectFrameBounds" extendedState="1">
+    <option name="x" value="241" />
+    <option name="y" value="38" />
     <option name="width" value="1877" />
     <option name="height" value="975" />
   </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
@@ -143,25 +163,25 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1540875391773</updated>
-      <workItem from="1540875393292" duration="1253000" />
+      <workItem from="1540875393292" duration="6953000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="1253000" />
+    <option name="totallyTimeSpent" value="6953000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="114" y="36" width="1877" height="975" extended-state="0" />
+    <frame x="241" y="38" width="1877" height="975" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info id="Designer" />
       <window_info id="UI Designer" />
       <window_info id="Favorites" side_tool="true" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24959128" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.13133515" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Database Changes" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Version Control" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info active="true" anchor="bottom" id="Terminal" visible="true" weight="0.06795017" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
@@ -187,10 +207,32 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="editorHistoryManager">
+    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/src.zip!/java/util/HashMap.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="253">
+          <caret line="1909" column="19" selection-start-line="1909" selection-start-column="19" selection-end-line="1909" selection-end-column="19" />
+          <folding>
+            <element signature="e#68865#68866#0" expanded="true" />
+            <element signature="e#68916#68917#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar:///Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/src.zip!/java/util/LinkedHashMap.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="257">
+          <caret line="191" column="17" selection-start-line="191" selection-start-column="17" selection-end-line="191" selection-end-column="17" />
+          <folding>
+            <element signature="e#8806#8807#0" expanded="true" />
+            <element signature="e#8859#8860#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/java/util/HashMap.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="453">
-          <caret line="686" column="55" selection-start-line="686" selection-start-column="55" selection-end-line="686" selection-end-column="55" />
+        <state relative-caret-position="264">
+          <caret line="1938" column="39" lean-forward="true" selection-start-line="1938" selection-start-column="39" selection-end-line="1938" selection-end-column="39" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>

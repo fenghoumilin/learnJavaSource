@@ -624,26 +624,35 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                    boolean evict) {
+        //新建一个node数组引用，一个节点p， 数组长度n
         Node<K,V>[] tab; Node<K,V> p; int n, i;
+        //当前map数组为空时，初始化
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
+        //当前数组的hash节点是否为空，为空就直接新建一个节点
         if ((p = tab[i = (n - 1) & hash]) == null)
             tab[i] = newNode(hash, key, value, null);
         else {
             Node<K,V> e; K k;
+            //hash值相等的情况下判断key是否相等
             if (p.hash == hash &&
                 ((k = p.key) == key || (key != null && key.equals(k))))
+                //hash值一样，key也相等，直接覆盖
                 e = p;
+            //p继承TreeNode时，表示p在红黑树上
             else if (p instanceof TreeNode)
                 e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
             else {
+                //在链表上添加节点
                 for (int binCount = 0; ; ++binCount) {
                     if ((e = p.next) == null) {
                         p.next = newNode(hash, key, value, null);
+                        //当链表长度大于8时，转化成红黑树
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
                         break;
                     }
+                    //在链表里面找到相同key的值
                     if (e.hash == hash &&
                         ((k = e.key) == key || (key != null && key.equals(k))))
                         break;
@@ -755,11 +764,15 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final void treeifyBin(Node<K,V>[] tab, int hash) {
         int n, index; Node<K,V> e;
+        //当前桶为空，或者桶的长度小于最小树的容量时，调整map
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
         else if ((e = tab[index = (n - 1) & hash]) != null) {
+            //建立linkedHashMap.entry 头节点hd
             TreeNode<K,V> hd = null, tl = null;
+            //遍历当前hash桶
             do {
+                //将原本的map节点转成linkedhashMap节点
                 TreeNode<K,V> p = replacementTreeNode(e, null);
                 if (tl == null)
                     hd = p;
@@ -1908,8 +1921,10 @@ public class HashMap<K,V> extends AbstractMap<K,V>
          * Forms tree of the nodes linked from this node.
          * @return root of tree
          */
+
         final void treeify(Node<K,V>[] tab) {
             TreeNode<K,V> root = null;
+            //this为当前hash桶的节点的红黑树的根节点，这里将链表树化，
             for (TreeNode<K,V> x = this, next; x != null; x = next) {
                 next = (TreeNode<K,V>)x.next;
                 x.left = x.right = null;
@@ -1922,9 +1937,11 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                     K k = x.key;
                     int h = x.hash;
                     Class<?> kc = null;
+                    //遍历已经建立好的红黑树，用当前节点x与每一个节点比较，来构建新的红黑树
                     for (TreeNode<K,V> p = root;;) {
                         int dir, ph;
                         K pk = p.key;
+                        //hash值小的话就放在左子树
                         if ((ph = p.hash) > h)
                             dir = -1;
                         else if (ph < h)
