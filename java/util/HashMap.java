@@ -342,13 +342,19 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     /**
      * Returns x's Class if it is of the form "class C implements
      * Comparable<C>", else null.
+     * 如果对象x的类是C，如果C实现了Comparable<C>接口，那么返回C，否则返回null
      */
     static Class<?> comparableClassFor(Object x) {
         if (x instanceof Comparable) {
             Class<?> c; Type[] ts, as; Type t; ParameterizedType p;
-            if ((c = x.getClass()) == String.class) // bypass checks
+            if ((c = x.getClass()) == String.class) // bypass checks 由于字符串已经实现了comparable，所以直接返回
                 return c;
-            if ((ts = c.getGenericInterfaces()) != null) {
+            // 如果 c 不是字符串类，获取c直接实现的接口（如果是泛型接口则附带泛型信息）
+            if ((ts = c.getGenericInterfaces()) != null) { // 遍历接口数组
+                // 如果当前接口t是个泛型接口
+                // 如果该泛型接口t的原始类型p 是 Comparable 接口
+                // 如果该Comparable接口p只定义了一个泛型参数
+                // 如果这一个泛型参数的类型就是c，那么返回c
                 for (int i = 0; i < ts.length; ++i) {
                     if (((t = ts[i]) instanceof ParameterizedType) &&
                         ((p = (ParameterizedType)t).getRawType() ==
@@ -357,14 +363,18 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                         as.length == 1 && as[0] == c) // type arg is c
                         return c;
                 }
+                // 上面for循环的目的就是为了看看x的class是否 implements  Comparable<x的class>
             }
         }
-        return null;
+        return null;// 如果c并没有实现 Comparable<c> 那么返回空
     }
 
     /**
      * Returns k.compareTo(x) if x matches kc (k's screened comparable
      * class), else 0.
+     *
+     * 如果x所属的类是kc，返回k.compareTo(x)的比较结果
+     * 如果x为空，或者其所属的类不是kc，返回0
      */
     @SuppressWarnings({"rawtypes","unchecked"}) // for cast to Comparable
     static int compareComparables(Class<?> kc, Object k, Object x) {
@@ -1906,6 +1916,16 @@ public class HashMap<K,V> extends AbstractMap<K,V>
          * order, just a consistent insertion rule to maintain
          * equivalence across rebalancings. Tie-breaking further than
          * necessary simplifies testing a bit.
+         * 用这个方法来比较两个对象，返回值要么大于0，要么小于0，不会为0
+         * * 也就是说这一步一定能确定要插入的节点要么是树的左节点，要么是右节点，不然就无法继续满足二叉树结构了
+         * *
+         * * 先比较两个对象的类名，类名是字符串对象，就按字符串的比较规则
+         * * 如果两个对象是同一个类型，那么调用本地方法为两个对象生成hashCode值，再进行比较，hashCode相等的话返回-1
+         * ---------------------
+         * 作者：老艮头
+         * 来源：CSDN
+         * 原文：https://blog.csdn.net/weixin_42340670/article/details/80673127
+         * 版权声明：本文为博主原创文章，转载请附上博文链接！
          */
         static int tieBreakOrder(Object a, Object b) {
             int d;
@@ -1946,9 +1966,12 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                             dir = -1;
                         else if (ph < h)
                             dir = 1;
+                        //hash值相等时
                         else if ((kc == null &&
                                   (kc = comparableClassFor(k)) == null) ||
                                  (dir = compareComparables(kc, k, pk)) == 0)
+                            //上面时判断k是不是继承了Comparable，再比较k与pk
+                            //如果kc为空或者比较不出结果，就进行最终的比较
                             dir = tieBreakOrder(k, pk);
 
                         TreeNode<K,V> xp = p;
@@ -1958,12 +1981,14 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                 xp.left = x;
                             else
                                 xp.right = x;
+                            //平衡调整插入之后的红黑树
                             root = balanceInsertion(root, x);
                             break;
                         }
                     }
                 }
             }
+            // 确保红黑树根节点是数组中该index的第一个节点
             moveRootToFront(tab, root);
         }
 
@@ -2197,6 +2222,22 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
         /* ------------------------------------------------------------ */
         // Red-black tree methods, all adapted from CLR
+        /*************对红黑树节点x进行左旋操作 ******************/
+        /*
+         * 左旋示意图：对节点x进行左旋
+         *   root                   root
+         *    /                       /
+         *   p                       r
+         *  / \                     / \
+         * l   r      ----->       p  rr
+         *    / \                 / \
+         *   rl rr               l  rl
+         * 左旋做了三件事：
+         * 1. 将y的左子节点赋给x的右子节点,并将x赋给y左子节点的父节点(y左子节点非空时)
+         * 2. 将x的父节点p(非空时)赋给y的父节点，同时更新p的子节点为y(左或右)
+         * 3. 将y的左子节点设为x，将x的父节点设为y
+         */
+
 
         static <K,V> TreeNode<K,V> rotateLeft(TreeNode<K,V> root,
                                               TreeNode<K,V> p) {
@@ -2204,6 +2245,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             if (p != null && (r = p.right) != null) {
                 if ((rl = p.right = r.left) != null)
                     rl.parent = p;
+                //判断根节点的情况
                 if ((pp = r.parent = p.parent) == null)
                     (root = r).red = false;
                 else if (pp.left == p)
@@ -2215,6 +2257,22 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
             return root;
         }
+        /*************对红黑树节点y进行右旋操作 ******************/
+        /*
+         * 左旋示意图：对节点y进行右旋
+         *        p                   p
+         *       /                   /
+         *      y                   x
+         *     / \                 / \
+         *    x  ry   ----->      lx  y
+         *   / \                     / \
+         * lx  rx                   rx ry
+         * 右旋做了三件事：
+         * 1. 将x的右子节点赋给y的左子节点,并将y赋给x右子节点的父节点(x右子节点非空时)
+         * 2. 将y的父节点p(非空时)赋给x的父节点，同时更新p的子节点为x(左或右)
+         * 3. 将x的右子节点设为y，将y的父节点设为x
+         */
+
 
         static <K,V> TreeNode<K,V> rotateRight(TreeNode<K,V> root,
                                                TreeNode<K,V> p) {
@@ -2236,14 +2294,19 @@ public class HashMap<K,V> extends AbstractMap<K,V>
 
         static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,
                                                     TreeNode<K,V> x) {
+            //默认节点为红色
             x.red = true;
+            // xp父节点 xpp祖父节点 xppl祖父左节点 xppr 祖父右节点
             for (TreeNode<K,V> xp, xpp, xppl, xppr;;) {
                 if ((xp = x.parent) == null) {
+                    // x的父节点为空，x应为根节点，应为黑色
                     x.red = false;
                     return x;
                 }
                 else if (!xp.red || (xpp = xp.parent) == null)
+                    // 父节点是黑色，祖父节点为空，直接返回
                     return root;
+                //父节点为红色，且祖父节点部位空，且父节点为祖父节点的左子树
                 if (xp == (xppl = xpp.left)) {
                     if ((xppr = xpp.right) != null && xppr.red) {
                         xppr.red = false;

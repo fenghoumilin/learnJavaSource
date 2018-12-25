@@ -1860,7 +1860,7 @@ public class Collections {
         }
 
         /**
-         * Singleton for {@link emptyNavigableMap()} which is also immutable.
+         * Singleton for {link emptyNavigableMap()} which is also immutable.
          */
         private static final EmptyNavigableMap<?,?> EMPTY_NAVIGABLE_MAP =
             new EmptyNavigableMap<>();

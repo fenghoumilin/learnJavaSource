@@ -2366,8 +2366,14 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      */
     private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
         int n = tab.length, stride;
+        // stride 在单核下直接等于 n，多核模式下为 (n>>>3)/NCPU，最小值是 16
+        // stride 可以理解为”步长“，有 n 个位置是需要进行迁移的，
+        //   将这 n 个任务分为多个任务包，每个任务包有 stride 个任务
         if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
             stride = MIN_TRANSFER_STRIDE; // subdivide range
+        // 如果 nextTab 为 null，先进行一次初始化
+        //    前面我们说了，外围会保证第一个发起迁移的线程调用此方法时，参数 nextTab 为 null
+        //       之后参与迁移的线程调用此方法时，nextTab 不会为 null
         if (nextTab == null) {            // initiating
             try {
                 @SuppressWarnings("unchecked")
@@ -2381,15 +2387,29 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             transferIndex = n;
         }
         int nextn = nextTab.length;
+        // ForwardingNode 翻译过来就是正在被迁移的 Node
+        // 这个构造方法会生成一个Node，key、value 和 next 都为 null，关键是 hash 为 MOVED
+        // 后面我们会看到，原数组中位置 i 处的节点完成迁移工作后，
+        //    就会将位置 i 处设置为这个 ForwardingNode，用来告诉其他线程该位置已经处理过了
+        //    所以它其实相当于是一个标志。
         ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab);
+        // advance 指的是做完了一个位置的迁移工作，可以准备做下一个位置的了
         boolean advance = true;
         boolean finishing = false; // to ensure sweep before committing nextTab
+        /*
+         * 下面这个 for 循环，最难理解的在前面，而要看懂它们，应该先看懂后面的，然后再倒回来看
+         *
+         */
+
+        // i 是位置索引，bound 是边界，注意是从后往前
         for (int i = 0, bound = 0;;) {
             Node<K,V> f; int fh;
             while (advance) {
                 int nextIndex, nextBound;
                 if (--i >= bound || finishing)
                     advance = false;
+                // 将 transferIndex 值赋给 nextIndex
+                // 这里 transferIndex 一旦小于等于 0，说明原数组的所有位置都有相应的线程去处理了
                 else if ((nextIndex = transferIndex) <= 0) {
                     i = -1;
                     advance = false;
@@ -2398,6 +2418,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                          (this, TRANSFERINDEX, nextIndex,
                           nextBound = (nextIndex > stride ?
                                        nextIndex - stride : 0))) {
+                    // 看括号中的代码，nextBound 是这次迁移任务的边界，注意，是从后往前
                     bound = nextBound;
                     i = nextIndex - 1;
                     advance = false;
@@ -2405,19 +2426,28 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             }
             if (i < 0 || i >= n || i + n >= nextn) {
                 int sc;
+                // 所有的迁移操作已经完成
                 if (finishing) {
+                    // 将新的 nextTab 赋值给 table 属性，完成迁移
                     nextTable = null;
                     table = nextTab;
+                    // 重新计算 sizeCtl：n 是原数组长度，所以 sizeCtl 得出的值将是新数组长度的 0.75 倍
                     sizeCtl = (n << 1) - (n >>> 1);
                     return;
                 }
+                // 之前我们说过，sizeCtl 在迁移前会设置为 (rs << RESIZE_STAMP_SHIFT) + 2
+                // 然后，每有一个线程参与迁移就会将 sizeCtl 加 1，
+                // 这里使用 CAS 操作对 sizeCtl 进行减 1，代表做完了属于自己的任务
                 if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {
                     if ((sc - 2) != resizeStamp(n) << RESIZE_STAMP_SHIFT)
                         return;
+                    // 到这里，说明 (sc - 2) == resizeStamp(n) << RESIZE_STAMP_SHIFT，
+                    // 也就是说，所有的迁移任务都做完了，也就会进入到上面的 if(finishing){} 分支了
                     finishing = advance = true;
                     i = n; // recheck before commit
                 }
             }
+            // 如果位置 i 处是空的，没有任何节点，那么放入刚刚初始化的 ForwardingNode ”空节点“
             else if ((f = tabAt(tab, i)) == null)
                 advance = casTabAt(tab, i, null, fwd);
             else if ((fh = f.hash) == MOVED)
