@@ -127,16 +127,18 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          * subclasses, but both need nonfair try for trylock method.
          */
         final boolean nonfairTryAcquire(int acquires) {
-            final Thread current = Thread.currentThread();
-            int c = getState();
-            if (c == 0) {
+            final Thread current = Thread.currentThread();//当前线程
+            int c = getState();//获取同步状态
+            if (c == 0) {   //表示锁被占用
+                //以cas方式更新同步状态
                 if (compareAndSetState(0, acquires)) {
+                    //更新成功，设置锁的占有线程为当前线程
                     setExclusiveOwnerThread(current);
                     return true;
                 }
             }
-            else if (current == getExclusiveOwnerThread()) {
-                int nextc = c + acquires;
+            else if (current == getExclusiveOwnerThread()) {    //判断是否属于重入状态
+                int nextc = c + acquires;       //重入时，同步状态累加
                 if (nextc < 0) // overflow
                     throw new Error("Maximum lock count exceeded");
                 setState(nextc);
@@ -146,13 +148,13 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         }
 
         protected final boolean tryRelease(int releases) {
-            int c = getState() - releases;
-            if (Thread.currentThread() != getExclusiveOwnerThread())
+            int c = getState() - releases;      //同步状态减1
+            if (Thread.currentThread() != getExclusiveOwnerThread())    //持有锁的线程和释放锁的线程必须是同一个
                 throw new IllegalMonitorStateException();
             boolean free = false;
-            if (c == 0) {
+            if (c == 0) {   //没有线程占有锁
                 free = true;
-                setExclusiveOwnerThread(null);
+                setExclusiveOwnerThread(null);  //清除占有线程
             }
             setState(c);
             return free;

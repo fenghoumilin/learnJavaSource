@@ -899,6 +899,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @return true if successful
      */
     private boolean addWorker(Runnable firstTask, boolean core) {
+        //基于CAS+死循环实现的关于线程池状态，线程数量的校验与更新逻辑。
         retry:
         for (;;) {
             int c = ctl.get();
@@ -929,7 +930,11 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         boolean workerAdded = false;
         Worker w = null;
         try {
+            //把指定任务作为参数新建一个worker线程
             w = new Worker(firstTask);
+            //这里是重点，咋一看，一定以为w.thread就是我们传入的firstTask
+            //其实是通过线程池构造函数参数threadFactory生成的woker对象
+            //也就是说这个变量t就是代表woker线程。绝对不是用户提交的线程任务firstTask！！！
             final Thread t = w.thread;
             if (t != null) {
                 final ReentrantLock mainLock = this.mainLock;
@@ -938,12 +943,14 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     // Recheck while holding lock.
                     // Back out on ThreadFactory failure or if
                     // shut down before lock acquired.
+                    //加锁之后仍旧是判断线程池状态等一些校验逻辑。
                     int rs = runStateOf(ctl.get());
 
                     if (rs < SHUTDOWN ||
                         (rs == SHUTDOWN && firstTask == null)) {
                         if (t.isAlive()) // precheck that t is startable
                             throw new IllegalThreadStateException();
+                        //把新建的woker线程放入集合保存，这里使用的是HashSet
                         workers.add(w);
                         int s = workers.size();
                         if (s > largestPoolSize)
@@ -954,12 +961,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     mainLock.unlock();
                 }
                 if (workerAdded) {
+                    //然后启动woker线程
+                    //这里再强调一遍上面说的逻辑，该变量t代表woker线程，也就是会调用woker的run方法
                     t.start();
                     workerStarted = true;
                 }
             }
         } finally {
             if (! workerStarted)
+                //如果woker启动失败，则进行一些善后工作，比如说修改当前woker数量等等
                 addWorkerFailed(w);
         }
         return workerStarted;
@@ -1126,11 +1136,18 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     final void runWorker(Worker w) {
         Thread wt = Thread.currentThread();
+        //task就是Woker构造函数入参指定的任务，即用户提交的任务
         Runnable task = w.firstTask;
         w.firstTask = null;
         w.unlock(); // allow interrupts
         boolean completedAbruptly = true;
         try {
+            //一般情况下，task都不会为空（特殊情况上面注释中也说明了），因此会直接进入循环体中
+            //这里getTask方法是要重点说明的，它的实现跟我们构造参数设置存活时间有关
+            //我们都知道构造参数设置的时间代表了线程池中的线程，即woker线程的存活时间，如果到期则回收woker线程，这个逻辑的实现就在getTask中。
+            //来不及执行的任务，线程池会放入一个阻塞队列，getTask方法就是去阻塞队列中取任务，用户设置的存活时间，就是
+            //从这个阻塞队列中取任务等待的最大时间，如果getTask返回null，意思就是woker等待了指定时间仍然没有
+            //取到任务，此时就会跳过循环体，进入woker线程的销毁逻辑。
             while (task != null || (task = getTask()) != null) {
                 w.lock();
                 // If pool is stopping, ensure thread is interrupted;
@@ -1362,20 +1379,33 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * thread.  If it fails, we know we are shut down or saturated
          * and so reject the task.
          */
+        //JDK8的源码中，线程池本身的状态跟worker数量使用同一个变量ctl来维护
         int c = ctl.get();
+        //通过位运算得出当然线程池中的worker数量与构造参数corePoolSize进行比较
         if (workerCountOf(c) < corePoolSize) {
+            //如果小于corePoolSize，则直接新增一个worker，并把当然用户提交的任务command作为参数，如果成功则返回。
             if (addWorker(command, true))
                 return;
+            //如果失败，则获取最新的线程池数据
             c = ctl.get();
         }
+        //如果线程池仍在运行，则把任务放到阻塞队列中等待执行。
         if (isRunning(c) && workQueue.offer(command)) {
+            //这里的recheck思路是为了处理并发问题
             int recheck = ctl.get();
+            //当任务成功放入队列时，如果recheck发现线程池已经不再运行了则从队列中把任务删除
             if (! isRunning(recheck) && remove(command))
+                //删除成功以后，会调用构造参数传入的拒绝策略。
                 reject(command);
+                //如果worker的数量为0（此时队列中可能有任务没有执行），则新建一个worker（由于此时新建woker的目的是执行队列中堆积的任务，
+                //因此入参没有执行任务，详细逻辑后面会详细分析addWorker方法）。
             else if (workerCountOf(recheck) == 0)
                 addWorker(null, false);
         }
+        //如果前面的新增woker，放入队列都失败，则会继续新增worker，此时线程池的状态是woker数量达到corePoolSize，阻塞队列任务已满
+        //只能基于maximumPoolSize参数新建woker
         else if (!addWorker(command, false))
+            //如果基于maximumPoolSize新建woker失败，此时是线程池中线程数已达到上限，队列已满，则调用构造参数中传入的拒绝策略
             reject(command);
     }
 
